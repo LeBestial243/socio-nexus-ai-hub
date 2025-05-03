@@ -72,15 +72,19 @@ const AuthForm: React.FC = () => {
     setAuthError(null);
     
     try {
+      console.log("Tentative de connexion avec:", values.email);
       const { error } = await signIn(values.email, values.password);
+      
       if (error) {
         throw new Error(error.message || 'Échec de la connexion');
       }
+      
       toast({
         title: 'Connexion réussie',
         description: 'Vous êtes maintenant connecté.',
       });
     } catch (error: any) {
+      console.error("Erreur de connexion détaillée:", error);
       setAuthError(error.message);
       toast({
         title: 'Erreur de connexion',
@@ -127,7 +131,7 @@ const AuthForm: React.FC = () => {
       // Réinitialiser le formulaire d'inscription
       registerForm.reset();
     } catch (error: any) {
-      console.error("Erreur d'inscription:", error);
+      console.error("Erreur d'inscription détaillée:", error);
       setAuthError(error.message);
       toast({
         title: 'Erreur d\'inscription',

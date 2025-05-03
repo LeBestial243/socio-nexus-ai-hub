@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Configurer l'écouteur d'événements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         console.log("Événement d'authentification:", event, currentSession?.user?.id);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -56,17 +56,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // Vérifier l'état de la session au chargement
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("Session au chargement:", currentSession?.user?.id);
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      
-      if (currentSession?.user) {
-        fetchProfile(currentSession.user.id);
-      } else {
+    const initSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Session au chargement:", currentSession?.user?.id);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
+          await fetchProfile(currentSession.user.id);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération de la session:", error);
         setIsLoading(false);
       }
-    });
+    };
+
+    initSession();
 
     return () => {
       subscription.unsubscribe();
@@ -113,8 +121,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) {
         // Messages d'erreur personnalisés et plus descriptifs
-        if (error.message.includes("Email logins are disabled")) {
-          throw new Error("L'authentification par email est désactivée. Veuillez activer cette option dans les paramètres de votre projet Supabase.");
+        if (error.message.includes("Email not confirmed")) {
+          throw new Error("Veuillez confirmer votre email avant de vous connecter.");
+        } else if (error.message.includes("Email logins are disabled")) {
+          throw new Error("L'authentification par email est désactivée. Veuillez contacter l'administrateur.");
         } else if (error.message.includes("Invalid login credentials")) {
           throw new Error("Identifiants invalides. Vérifiez votre email et mot de passe.");
         } else {
