@@ -11,6 +11,10 @@ import YouthProfiles from "./pages/YouthProfiles";
 import Documents from "./pages/Documents";
 import Navbar from "./components/layout/Navbar";
 import Sidebar from "./components/layout/Sidebar";
+import Auth from "./pages/Auth";
+import OrganizationSetup from "./pages/OrganizationSetup";
+import { AuthProvider } from "./contexts/AuthContext";
+import RequireAuth from "./components/auth/RequireAuth";
 
 const queryClient = new QueryClient();
 
@@ -35,25 +39,39 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          } />
-          <Route path="/youth-profiles" element={
-            <AppLayout>
-              <YouthProfiles />
-            </AppLayout>
-          } />
-          <Route path="/documents" element={
-            <AppLayout>
-              <Documents />
-            </AppLayout>
-          } />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/organization-setup" element={
+              <RequireAuth>
+                <OrganizationSetup />
+              </RequireAuth>
+            } />
+            <Route path="/dashboard" element={
+              <RequireAuth>
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
+              </RequireAuth>
+            } />
+            <Route path="/youth-profiles" element={
+              <RequireAuth>
+                <AppLayout>
+                  <YouthProfiles />
+                </AppLayout>
+              </RequireAuth>
+            } />
+            <Route path="/documents" element={
+              <RequireAuth>
+                <AppLayout>
+                  <Documents />
+                </AppLayout>
+              </RequireAuth>
+            } />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
