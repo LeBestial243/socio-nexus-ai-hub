@@ -98,6 +98,8 @@ const AuthForm: React.FC = () => {
     setAuthError(null);
     
     try {
+      console.log("Tentative d'inscription avec les valeurs:", values);
+      
       const { error } = await signUp(
         values.email,
         values.password,
@@ -108,16 +110,24 @@ const AuthForm: React.FC = () => {
         }
       );
       
+      console.log("Résultat de l'inscription:", error ? `Erreur: ${error.message}` : "Réussite");
+      
       if (error) {
         throw new Error(error.message || 'Échec de l\'inscription');
       }
       
       // Si l'inscription réussit, passez à l'onglet de connexion
+      toast({
+        title: 'Inscription réussie',
+        description: 'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.',
+      });
+      
       setActiveTab('login');
       
       // Réinitialiser le formulaire d'inscription
       registerForm.reset();
     } catch (error: any) {
+      console.error("Erreur d'inscription:", error);
       setAuthError(error.message);
       toast({
         title: 'Erreur d\'inscription',

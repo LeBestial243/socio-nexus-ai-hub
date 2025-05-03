@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Configurer l'écouteur d'événements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log("Événement d'authentification:", event, currentSession?.user?.id);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
@@ -57,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Vérifier l'état de la session au chargement
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Session au chargement:", currentSession?.user?.id);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
@@ -74,6 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("Chargement du profil pour l'utilisateur:", userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -84,8 +87,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
 
+      console.log("Profil récupéré:", data);
       if (data) {
         setProfile(data as Profile);
+      } else {
+        console.warn("Aucun profil trouvé pour l'utilisateur:", userId);
       }
     } catch (error: any) {
       console.error('Erreur lors du chargement du profil:', error.message);
@@ -101,7 +107,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log("Tentative de connexion avec:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      console.log("Résultat de connexion:", data?.user?.id, error?.message);
       
       if (error) {
         // Messages d'erreur personnalisés et plus descriptifs
@@ -127,6 +136,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userData: { first_name: string; last_name: string; role: string }
   ) => {
     try {
+      console.log("Tentative d'inscription avec:", email, "et les données:", userData);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -138,6 +149,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           },
         },
       });
+      
+      console.log("Résultat d'inscription:", data?.user?.id, error?.message);
       
       if (error) throw error;
 
