@@ -35,19 +35,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Configurer l'écouteur d'événements d'authentification
+    console.log("Initialisation du contexte d'authentification");
+    
+    // Configurer l'écouteur d'événements d'authentification AVANT de vérifier la session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log("Événement d'authentification:", event, currentSession?.user?.id);
+        
+        // Mise à jour synchrone des états de session et d'utilisateur
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
         if (event === 'SIGNED_OUT') {
           setProfile(null);
-          // Au lieu d'utiliser navigate, nous laissons le composant qui utilise ce contexte
-          // gérer la redirection via useEffect
+          setIsLoading(false);
         } else if (event === 'SIGNED_IN' && currentSession?.user) {
-          // Utiliser setTimeout pour éviter les problèmes potentiels de blocage
+          // Utiliser setTimeout pour éviter les problèmes potentiels de deadlock
           setTimeout(() => {
             fetchProfile(currentSession.user.id);
           }, 0);
@@ -55,13 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Vérifier l'état de la session au chargement
+    // ENSUITE vérifier l'état de la session au chargement
     const initSession = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         console.log("Session au chargement:", currentSession?.user?.id);
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
           await fetchProfile(currentSession.user.id);
@@ -77,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initSession();
 
     return () => {
+      console.log("Nettoyage de l'écouteur d'authentification");
       subscription.unsubscribe();
     };
   }, []);
@@ -187,7 +189,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      // Nous ne faisons plus la redirection ici
+      console.log("Déconnexion réussie");
     } catch (error: any) {
       console.error('Erreur de déconnexion:', error.message);
       toast({
