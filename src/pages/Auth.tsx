@@ -1,15 +1,31 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthForm from '@/components/auth/AuthForm';
 
 const Auth: React.FC = () => {
   const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (user && !isLoading) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, isLoading, navigate]);
 
-  // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
-  if (user && !isLoading) {
-    return <Navigate to="/dashboard" replace />;
+  // Si l'utilisateur est en cours de chargement, afficher un indicateur de chargement
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-socio-blue"></div>
+      </div>
+    );
+  }
+
+  // Si l'utilisateur est déjà connecté, ne pas rendre le composant Auth
+  if (user) {
+    return null; // Le useEffect ci-dessus s'occupera de la redirection
   }
 
   return (

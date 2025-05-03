@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface RequireAuthProps {
@@ -10,6 +10,14 @@ interface RequireAuthProps {
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (!isLoading && !user) {
+      // Rediriger vers la page de connexion avec l'emplacement actuel enregistré
+      navigate('/auth', { state: { from: location }, replace: true });
+    }
+  }, [user, isLoading, navigate, location]);
 
   if (isLoading) {
     return (
@@ -19,9 +27,9 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
     );
   }
 
+  // Si l'utilisateur n'est pas connecté, ne rien rendre pendant la redirection
   if (!user) {
-    // Rediriger vers la page de connexion avec l'emplacement actuel enregistré
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return null;
   }
 
   return <>{children}</>;

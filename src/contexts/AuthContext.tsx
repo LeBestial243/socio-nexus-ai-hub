@@ -3,7 +3,6 @@ import React, { createContext, useState, useEffect, useContext, ReactNode } from
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 
 type Profile = {
   id: string;
@@ -34,7 +33,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Configurer l'écouteur d'événements d'authentification
@@ -46,7 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (event === 'SIGNED_OUT') {
           setProfile(null);
-          navigate('/auth');
+          // Au lieu d'utiliser navigate, nous laissons le composant qui utilise ce contexte
+          // gérer la redirection via useEffect
         } else if (event === 'SIGNED_IN' && currentSession?.user) {
           // Utiliser setTimeout pour éviter les problèmes potentiels de blocage
           setTimeout(() => {
@@ -72,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -178,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/auth');
+      // Nous ne faisons plus la redirection ici
     } catch (error: any) {
       console.error('Erreur de déconnexion:', error.message);
       toast({
