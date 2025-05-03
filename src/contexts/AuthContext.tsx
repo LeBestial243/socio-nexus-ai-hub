@@ -102,7 +102,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      
+      if (error) {
+        // Messages d'erreur personnalisés et plus descriptifs
+        if (error.message.includes("Email logins are disabled")) {
+          throw new Error("L'authentification par email est désactivée. Veuillez activer cette option dans les paramètres de votre projet Supabase.");
+        } else if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Identifiants invalides. Vérifiez votre email et mot de passe.");
+        } else {
+          throw error;
+        }
+      }
+      
       return { error: null };
     } catch (error: any) {
       console.error('Erreur de connexion:', error.message);
