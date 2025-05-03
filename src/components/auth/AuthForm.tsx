@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 // Schéma de validation pour le formulaire de connexion
 const loginSchema = z.object({
@@ -38,6 +40,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const AuthForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('login');
+  const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
 
@@ -66,6 +69,8 @@ const AuthForm: React.FC = () => {
   // Gérer la soumission du formulaire de connexion
   const handleLogin = async (values: LoginFormValues) => {
     setIsLoading(true);
+    setAuthError(null);
+    
     try {
       const { error } = await signIn(values.email, values.password);
       if (error) {
@@ -76,6 +81,7 @@ const AuthForm: React.FC = () => {
         description: 'Vous êtes maintenant connecté.',
       });
     } catch (error: any) {
+      setAuthError(error.message);
       toast({
         title: 'Erreur de connexion',
         description: error.message,
@@ -89,6 +95,8 @@ const AuthForm: React.FC = () => {
   // Gérer la soumission du formulaire d'inscription
   const handleRegister = async (values: RegisterFormValues) => {
     setIsLoading(true);
+    setAuthError(null);
+    
     try {
       const { error } = await signUp(
         values.email,
@@ -104,8 +112,13 @@ const AuthForm: React.FC = () => {
         throw new Error(error.message || 'Échec de l\'inscription');
       }
       
+      // Si l'inscription réussit, passez à l'onglet de connexion
       setActiveTab('login');
+      
+      // Réinitialiser le formulaire d'inscription
+      registerForm.reset();
     } catch (error: any) {
+      setAuthError(error.message);
       toast({
         title: 'Erreur d\'inscription',
         description: error.message,
@@ -123,6 +136,14 @@ const AuthForm: React.FC = () => {
           <TabsTrigger value="login" className="rounded-l-md">Connexion</TabsTrigger>
           <TabsTrigger value="register" className="rounded-r-md">Inscription</TabsTrigger>
         </TabsList>
+
+        {authError && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erreur</AlertTitle>
+            <AlertDescription>{authError}</AlertDescription>
+          </Alert>
+        )}
 
         {/* Formulaire de connexion */}
         <TabsContent value="login">

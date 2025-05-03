@@ -127,7 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userData: { first_name: string; last_name: string; role: string }
   ) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -140,11 +140,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (error) throw error;
-      
-      toast({
-        title: 'Compte créé',
-        description: 'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.',
-      });
+
+      // Vérifier si l'utilisateur a été créé avec succès
+      if (data && data.user) {
+        toast({
+          title: 'Compte créé',
+          description: 'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.',
+        });
+      } else {
+        // Cas où l'email de confirmation est requis
+        toast({
+          title: 'Vérification requise',
+          description: 'Un email de confirmation a été envoyé à votre adresse. Veuillez vérifier votre boîte de réception.',
+        });
+      }
       
       return { error: null };
     } catch (error: any) {
