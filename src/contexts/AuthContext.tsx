@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Configurer l'écouteur d'événements d'authentification AVANT de vérifier la session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
-        console.log("Événement d'authentification:", event, currentSession?.user?.id);
+        console.log("Événement d'authentification:", event, "User ID:", currentSession?.user?.id || "Aucun");
         
         // Mise à jour synchrone des états de session et d'utilisateur
         setSession(currentSession);
@@ -49,7 +49,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (event === 'SIGNED_OUT') {
           setProfile(null);
           setIsLoading(false);
-        } else if (event === 'SIGNED_IN' && currentSession?.user) {
+          console.log("Utilisateur déconnecté, profil effacé");
+        } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && currentSession?.user) {
           // Utiliser setTimeout pour éviter les problèmes potentiels de deadlock
           setTimeout(() => {
             fetchProfile(currentSession.user.id);
@@ -61,10 +62,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // ENSUITE vérifier l'état de la session au chargement
     const initSession = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log("Session au chargement:", currentSession?.user?.id);
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+        
+        console.log("Session au chargement:", currentSession?.user?.id || "Aucune session");
         
         if (currentSession?.user) {
+          setSession(currentSession);
+          setUser(currentSession.user);
           await fetchProfile(currentSession.user.id);
         } else {
           setIsLoading(false);
@@ -117,9 +125,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Tentative de connexion avec:", email);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
       
-      console.log("Résultat de connexion:", data?.user?.id, error?.message);
+      console.log("Résultat de connexion:", data?.user?.id, "Erreur:", error?.message || "Aucune");
       
       if (error) {
         // Messages d'erreur personnalisés et plus descriptifs
@@ -136,7 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       return { error: null };
     } catch (error: any) {
-      console.error('Erreur de connexion:', error.message);
+      console.error('Erreur de connexion détaillée:', error);
       return { error };
     }
   };
@@ -148,6 +159,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     try {
       console.log("Tentative d'inscription avec:", email, "et les données:", userData);
+      
+      // Vérification des données avant envoi
+      if (!email || !password || !userData.first_name || !userData.last_name || !userData.role) {
+        throw new Error("Tous les champs sont obligatoires");
+      }
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -161,9 +177,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
       
-      console.log("Résultat d'inscription:", data?.user?.id, error?.message);
+      console.log("Résultat d'inscription:", data?.user?.id, "Erreur:", error?.message || "Aucune", "Status:", data?.user?.identities?.[0]?.identity_data);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur d'inscription détaillée:", error);
+        throw error;
+      }
 
       // Vérifier si l'utilisateur a été créé avec succès
       if (data && data.user) {
@@ -181,7 +200,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       return { error: null };
     } catch (error: any) {
-      console.error('Erreur d\'inscription:', error.message);
+      console.error('Erreur d\'inscription complète:', error);
       return { error };
     }
   };

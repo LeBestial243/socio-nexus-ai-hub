@@ -26,6 +26,7 @@ const Auth: React.FC = () => {
       const state = location.state as LocationState | null;
       const destination = state?.from?.pathname || '/dashboard';
       
+      console.log("Redirection vers:", destination);
       navigate(destination, { replace: true });
     }
   }, [user, isLoading, navigate, location, isRedirecting]);

@@ -85,10 +85,10 @@ const AuthForm: React.FC = () => {
       });
     } catch (error: any) {
       console.error("Erreur de connexion détaillée:", error);
-      setAuthError(error.message);
+      setAuthError(error.message || "Une erreur est survenue lors de la connexion");
       toast({
         title: 'Erreur de connexion',
-        description: error.message,
+        description: error.message || "Une erreur est survenue lors de la connexion",
         variant: 'destructive',
       });
     } finally {
@@ -132,10 +132,10 @@ const AuthForm: React.FC = () => {
       registerForm.reset();
     } catch (error: any) {
       console.error("Erreur d'inscription détaillée:", error);
-      setAuthError(error.message);
+      setAuthError(error.message || "Une erreur est survenue lors de l'inscription");
       toast({
         title: 'Erreur d\'inscription',
-        description: error.message,
+        description: error.message || "Une erreur est survenue lors de l'inscription",
         variant: 'destructive',
       });
     } finally {
